@@ -1,0 +1,109 @@
+{% extends 'auctions/layout.html' %}
+
+{% block body %}
+
+    <div class="container">
+        <!-- While Closed -->
+        {% if request.user.username == winner and item.ended %}
+            <h1 class="alert alert-success" >You Won The Bid :D</h1>
+        {% endif %}
+
+        <!-- Item Details -->
+        <h1>Listing : {{ item.title }}</h1>
+
+        <!-- If Owner Set Open || Close -->
+        {% if request.user.username == item.seller.username %}
+            <form action='{% url "close" item.id %}' method="post">
+                {% csrf_token %}
+                {% if item.ended %}
+                    <button type="submit" class="btn btn-secondary">Open Listing</button>
+                {% else %}
+                    <button type="submit" class="btn btn-danger">End Listing</button>
+                {% endif %}
+            </form>
+        {% endif %}
+
+        <!-- Add To WatchList -->
+        {% if request.user.is_authenticated %}
+            <form action='{% url "watchlist" item.id %}' method="post">
+                {% csrf_token %}
+                {% if not added %}
+                    <button type="submit" class="btn btn-secondary">Watchlist</button>
+                {% else %}
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                {% endif %}
+            </form>
+        {% endif %}
+
+        <h5 class="card-title">{{ item.description }}</h5>
+        <h1>${{ item.price }}</h1>
+
+        <!-- Bidding Place -->
+        {% if request.user.is_authenticated and not item.ended %}
+            <form action='{% url "listing" item.id %}' method="post">
+                <div class="form-group">
+                    {% csrf_token %}
+                    {% if message %}
+                        {% if added %}
+                            <div class="alert alert-success" role="alert">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    <label for="bidding">{{ count }} bid(s) so far. Your Bid is the current bid.</label>
+                    <input type="text" class="form-control" id="bidding" name="price" placeholder="Enter Your Bid">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        {% endif %}
+
+        <!-- More Info -->
+        <h5 class="card-title">Details</h5>
+        <ul>
+            <li>Listed by: {{ item.seller.username }}</li>
+            <li>Category :
+                {% if item.category %}
+                    {{ item.category }}
+                {% else %}
+                    No Category Listed.
+                {% endif %}
+            </li>
+        </ul>
+
+        <!-- Comments Section-->
+        {% for comment in comments %}
+            <div class="card">
+                <div class="card-header">
+                    {{ comment.commenter.username }}
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ comment.comment }}</p>
+                    <p class="card-text"><small class="text-muted">Created : {{comment.dateTime}}</small></p>
+                </div>
+            </div>
+        {% endfor%}
+
+        <!-- Add Comment -->
+        {% if request.user.is_authenticated %}
+            <form action='{% url "comment" item.id %}' method="post">
+                {% csrf_token %}
+                <div class="card">
+                    <div class="card-header">
+                        {{ request.user.username }}
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <textarea class="card-text" name="comment"></textarea>
+                        </p>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        {% endif %}
+    </div>
+    
+{% endblock %}
